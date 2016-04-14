@@ -4,35 +4,18 @@
 
 general:
     artifacts:
-        - /home/ubuntu/Unit_test/app/build/outputs/apk/
+        - /home/ubuntu/TestProject/app/build/outputs/apk/
 
 machine:
     environment:
         ANDROID_HOME: /usr/local/android-sdk-linux
-        ADB_INSTALL_TIMEOUT: "10"
 
 dependencies:
     override:
-
-            - echo y | android update sdk --no-ui --all --filter tools
-            - echo y | android update sdk --no-ui --all --filter build-tools-23.0.3
-            - chmod +x gradlew
-
+        - echo y | android update sdk --no-ui --all --filter tools,platform-tools,build-tools-23.0.3,android-23,extra-google-m2repository,extra-google-google_play_services,extra-android-support
+        - ANDROID_HOME=/usr/local/android-sdk-linux ./gradlew dependencies
 
 test:
-     override:
-        # start the emulator
-        - emulator -avd circleci-android22 -no-audio -no-window:
-            background: true
-            parallel: true
-        # wait for it to have booted
-        - circle-android wait-for-boot
-        # unlock the emulator screen
-        - sleep 30
-        - adb shell input keyevent 82
-        # run tests  against the emulator.
-        - ./gradlew connectedAndroidTest
-        # copy the build outputs to artifacts
-        - cp -r Unit_test/app/build/outputs $CIRCLE_ARTIFACTS
-        # copy the test results to the test results directory.
-        - cp -r Unit_test/app/build/outputs/androidTest-results/* $CIRCLE_TEST_REPORTS
+    override:
+        - (./gradlew assemble):
+            timeout: 360
