@@ -1,4 +1,5 @@
 #
+#
 # Build configuration for Circle CI
 #
 
@@ -12,10 +13,23 @@ machine:
 
 dependencies:
     override:
-        - echo y | android update sdk --no-ui --all --filter tools,platform-tools,build-tools-23.0.3,android-23,extra-google-m2repository,extra-google-google_play_services,extra-android-support
-        - ANDROID_HOME=/usr/local/android-sdk-linux ./gradlew dependencies
+
+            - echo y | android update sdk --no-ui --all --filter tools
+            - echo y | android update sdk --no-ui --all --filter build-tools-23.0.3
+            - chmod +x gradlew
+
 
 test:
-    override:
-        - (./gradlew assemble):
-            timeout: 360
+     override:
+       # start the emulator
+       - emulator -avd circleci-android22 -no-audio -no-window:
+           background: true
+           parallel: true
+       # wait for it to have booted
+       - circle-android wait-for-boot
+       # run tests  against the emulator.
+       - ./gradlew connectedAndroidTest
+       # copy the build outputs to artifacts
+       # cp -r Unit_test/app/build/outputs $CIRCLE_ARTIFACTS
+       # copy the test results to the test results directory.
+       # cp -r Unit_test/app/build/outputs/androidTest-results/* $CIRCLE_TEST_REPORTS
